@@ -39,7 +39,7 @@ pred_model = pickle.load(open(file_path, 'rb'))
 #pred_model = load_zipped_pickle('predict_waiting_rf_zip.sav')
 
 
-@app.post("/predict-waiting-time")
+@app.get("/predict-waiting-time")
 async def predict_waiting(fecha_inicio:str, tipo_chat:str, tipo_falla:str=None):
 
     df_prueba = pd.DataFrame({'Fecha_inicio': [fecha_inicio],
