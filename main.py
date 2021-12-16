@@ -41,6 +41,35 @@ pred_model = pickle.load(open(file_path, 'rb'))
 
 @app.get("/predict-waiting-time")
 async def predict_waiting(fecha_inicio:str, tipo_chat:str, tipo_falla:str=None):
+    
+    # encoding tipo de chat field
+    if ((tipo_chat.casefold() in 'reporte incidencias')  
+        or (tipo_chat.casefold() in 'failure report') 
+        or (tipo_chat.casefold() in 'relatorio de incidente')):
+        tipo_chat = 2
+    
+    elif ((tipo_chat.casefold() in 'reporte waha')  
+        or (tipo_chat.casefold() in 'relatorio de waha') 
+        or (tipo_chat.casefold() in 'waha report')):
+        tipo_chat = 3
+    
+    elif ((tipo_chat.casefold() in 'desbloqueo de usuario')  
+        or (tipo_chat.casefold() in 'desbloqueio do usuario') 
+        or (tipo_chat.casefold() in 'unlock user')):
+        tipo_chat = 0
+    
+    elif ((tipo_chat.casefold() in 'informacion general')  
+        or (tipo_chat.casefold() in 'general info') 
+        or (tipo_chat.casefold() in 'informacoes gerais')):
+        tipo_chat = 1
+    else:
+        tipo_chat = 2
+        
+    # encoding tipo de falla field
+    if tipo_falla is None:
+        tipo_falla = -1
+        
+    
 
     df_prueba = pd.DataFrame({'Fecha_inicio': [fecha_inicio],
                               'Tipo_de_Chat': [tipo_chat],
@@ -51,19 +80,19 @@ async def predict_waiting(fecha_inicio:str, tipo_chat:str, tipo_falla:str=None):
     df_prueba['Weeekday_conexion'] = pd.DatetimeIndex(df_prueba['Fecha_inicio']).weekday
     df_prueba['Hora_conexion'] = df_prueba['Fecha_inicio'].dt.hour
     
-    df_prueba["Tipo_de_Chat"] = df_prueba["Tipo_de_Chat"].astype('category')
-    df_prueba["Tipo_de_Chat_cat"] = df_prueba["Tipo_de_Chat"].cat.codes
+    #df_prueba["Tipo_de_Chat"] = df_prueba["Tipo_de_Chat"].astype('category')
+    #df_prueba["Tipo_de_Chat_cat"] = df_prueba["Tipo_de_Chat"].cat.codes
     
     
-    df_prueba["TipoDeFalla"] = df_prueba["TipoDeFalla"].astype('category')
-    df_prueba["TipoDeFalla"] = df_prueba["TipoDeFalla"].replace('Configuración de telefono',
-                                                                'Configuración del Teléfono')
-    df_prueba["TipoDeFalla"] = df_prueba["TipoDeFalla"].replace('Formato de hora y fecha',
-                                                                'Formato de Hora y Fecha')
-    df_prueba["TipoDeFalla_cat"] = df_prueba["TipoDeFalla"].cat.codes
+    #df_prueba["TipoDeFalla"] = df_prueba["TipoDeFalla"].astype('category')
+    #df_prueba["TipoDeFalla"] = df_prueba["TipoDeFalla"].replace('Configuración de telefono',
+    #                                                            'Configuración del Teléfono')
+    #df_prueba["TipoDeFalla"] = df_prueba["TipoDeFalla"].replace('Formato de hora y fecha',
+    #                                                            'Formato de Hora y Fecha')
+    #df_prueba["TipoDeFalla_cat"] = df_prueba["TipoDeFalla"].cat.codes
     
     features = ['Day_conexion', 'Weeekday_conexion', 'Hora_conexion',
-                'Tipo_de_Chat_cat', 'TipoDeFalla_cat']
+                'Tipo_de_Chat', 'TipoDeFalla']
     df_prueba =df_prueba[features]
     pred_waiting_time = pred_model.predict(df_prueba)[0]
     pred_waiting_time =  np.expm1(pred_waiting_time)
